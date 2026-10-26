@@ -1,0 +1,12 @@
+User-Name = "8944000000000000011"
+Acct-Status-Type = Interim-Update
+Acct-Session-Id = "test-session-0011"
+NAS-IP-Address = 192.0.2.10
+NAS-Identifier = "lns1"
+NAS-Port-Type = Virtual
+Framed-IP-Address = 100.64.1.11
+Acct-Session-Time = 300
+Acct-Input-Octets = 123456
+Acct-Output-Octets = 654321
+Acct-Input-Packets = 400
+Acct-Output-Packets = 500

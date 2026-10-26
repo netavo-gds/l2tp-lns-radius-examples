@@ -1,0 +1,11 @@
+User-Name = "8944000000000000011"
+Acct-Status-Type = Start
+Acct-Session-Id = "test-session-0011"
+NAS-IP-Address = 192.0.2.10
+NAS-Identifier = "lns1"
+NAS-Port-Type = Virtual
+Service-Type = Framed-User
+Framed-Protocol = PPP
+Framed-IP-Address = 100.64.1.11
+Calling-Station-Id = "198.51.100.1"
+Acct-Authentic = RADIUS

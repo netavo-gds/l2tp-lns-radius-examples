@@ -1,0 +1,129 @@
+# FreeRADIUS 3.x "users" file (mods-config/files/authorize) for L2TP data SIMs.
+#
+# Install as /etc/raddb/mods-config/files/authorize
+# (Debian/Ubuntu: /etc/freeradius/3.0/mods-config/files/authorize).
+# /etc/raddb/users is normally a symlink to this file.
+#
+# How it is used: the LNS sends an Access-Request with the SIM session's
+# User-Name and password (PAP or CHAP, whichever the PPP session negotiated).
+# The first matching entry below authorises the SIM and its reply items are
+# returned in the Access-Accept. Entries are processed in file order, and an
+# entry without "Fall-Through = Yes" stops the search.
+#
+# USERNAMES. What the LNS sees in User-Name is whatever identity is carried in
+# the SIM's PPP session: it might be the ICCID, the IMSI, the MSISDN, any of
+# those with a realm, or a name you configure on the device. Which one is
+# agreed between you and your SIM provider, and choosing it is your decision as
+# the operator. The examples below show each form. All identities here are fake:
+#     ICCID   89440000000000000xx   (19 digits, "89" + "44" UK prefix, zero-filled)
+#     IMSI    00101000000xxxx       (MCC 001 / MNC 01 is the ITU test network)
+#     MSISDN  447700900xxx          (Ofcom's range reserved for drama/fiction)
+#
+# PASSWORDS. Many SIM fleets send the same PPP password from every device, or a
+# password set by the provider, in which case the username and this file are
+# what really decides access. Cleartext-Password works for both PAP and CHAP.
+# Every password below is a placeholder.
+#
+# ADDRESSES come from 100.64.0.0/10 (RFC 6598) here. Use whatever private or
+# public space your network routes to the LNS. A static Framed-IP-Address must
+# be unique: FreeRADIUS does not check, and two SIMs given the same address will
+# fight over it on the LNS.
+
+########################################################################
+# (c) Realm policy. Put realm DEFAULTs first: they add reply items and fall
+#     through to the per-SIM entry further down.
+########################################################################
+
+# Every SIM arriving as <identity>@fleet-c.example.net gets an address from the
+# LNS pool "fleet-c-pool" and a 24-hour session limit. The realm must be listed
+# in proxy.conf so the "suffix" module recognises and strips it.
+DEFAULT	Realm == "fleet-c.example.net"
+	Framed-Pool = "fleet-c-pool",
+	Session-Timeout = 86400,
+	Fall-Through = Yes
+
+########################################################################
+# (a) Static address per SIM, keyed on the username.
+########################################################################
+
+# Keyed on ICCID.
+8944000000000000011	Cleartext-Password := "CHANGE-ME-sim-password"
+	Service-Type = Framed-User,
+	Framed-Protocol = PPP,
+	Framed-IP-Address = 100.64.1.11,
+	Framed-IP-Netmask = 255.255.255.255,
+	Acct-Interim-Interval = 300
+
+# Keyed on IMSI.
+001010000000012	Cleartext-Password := "CHANGE-ME-sim-password"
+	Service-Type = Framed-User,
+	Framed-Protocol = PPP,
+	Framed-IP-Address = 100.64.1.12,
+	Framed-IP-Netmask = 255.255.255.255,
+	Acct-Interim-Interval = 300
+
+# Keyed on MSISDN (international format, no "+").
+447700900013	Cleartext-Password := "CHANGE-ME-sim-password"
+	Service-Type = Framed-User,
+	Framed-Protocol = PPP,
+	Framed-IP-Address = 100.64.1.13,
+	Framed-IP-Netmask = 255.255.255.255,
+	Acct-Interim-Interval = 300
+
+# A SIM in a router with a LAN behind it: a static address for the SIM plus a
+# Framed-Route so the LNS routes 100.64.200.0/29 to this session. A gateway
+# of 0.0.0.0 means "via the session's own Framed-IP-Address".
+8944000000000000014	Cleartext-Password := "CHANGE-ME-sim-password"
+	Service-Type = Framed-User,
+	Framed-Protocol = PPP,
+	Framed-IP-Address = 100.64.1.14,
+	Framed-IP-Netmask = 255.255.255.255,
+	Framed-Route = "100.64.200.0/29 0.0.0.0 1",
+	Acct-Interim-Interval = 300
+
+########################################################################
+# (b) Pooled addressing. RADIUS names the pool; the LNS owns the pool and
+#     picks a free address from it. The pool name must exist on the LNS
+#     (accel-ppp: [ip-pool] "name="; RouterOS: /ip pool "name=").
+########################################################################
+
+8944000000000000021	Cleartext-Password := "CHANGE-ME-sim-password"
+	Service-Type = Framed-User,
+	Framed-Protocol = PPP,
+	Framed-Pool = "sims-pool",
+	Acct-Interim-Interval = 300
+
+8944000000000000022	Cleartext-Password := "CHANGE-ME-sim-password"
+	Service-Type = Framed-User,
+	Framed-Protocol = PPP,
+	Framed-Pool = "sims-pool",
+	Acct-Interim-Interval = 300
+
+# Alternative for large fleets: authorise a whole ICCID range with one entry.
+# This admits ANY username matching the pattern, so only use it if the
+# provider's LAC is the only thing that can reach your LNS and every SIM in
+# the range is yours. Uncomment to use.
+#
+#DEFAULT	User-Name =~ "^894400000000001[0-9]{4}$", Cleartext-Password := "CHANGE-ME-sim-password"
+#	Service-Type = Framed-User,
+#	Framed-Protocol = PPP,
+#	Framed-Pool = "sims-pool"
+
+########################################################################
+# (c) continued. The per-SIM entry for the realm example. The lookup key is
+#     the stripped identity; "Realm ==" stops the same identity matching
+#     without its realm. The realm DEFAULT above has already added
+#     Framed-Pool and Session-Timeout.
+########################################################################
+
+8944000000000000031	Realm == "fleet-c.example.net", Cleartext-Password := "CHANGE-ME-sim-password"
+	Service-Type = Framed-User,
+	Framed-Protocol = PPP
+
+########################################################################
+# Anything not matched above is an unknown SIM: reject it explicitly.
+# Keep this entry last.
+########################################################################
+
+DEFAULT	Auth-Type := Reject
+	Reply-Message = "Unknown SIM"

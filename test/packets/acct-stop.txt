@@ -1,0 +1,13 @@
+User-Name = "8944000000000000011"
+Acct-Status-Type = Stop
+Acct-Session-Id = "test-session-0011"
+NAS-IP-Address = 192.0.2.10
+NAS-Identifier = "lns1"
+NAS-Port-Type = Virtual
+Framed-IP-Address = 100.64.1.11
+Acct-Session-Time = 600
+Acct-Input-Octets = 234567
+Acct-Output-Octets = 765432
+Acct-Input-Packets = 800
+Acct-Output-Packets = 900
+Acct-Terminate-Cause = User-Request
